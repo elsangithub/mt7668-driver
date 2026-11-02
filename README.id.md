@@ -4,8 +4,8 @@
 
 # Driver Wi-Fi MediaTek MT7668 SDIO untuk TV Box Amlogic (Armbian Ophub)
 
-[![Release](https://img.shields.io/github/v/release/elsangithub/mt7668-driver?color=blue&label=release)](https://github.com/elsangithub/mt7668-driver/releases)
-[![Build & Release](https://github.com/elsangithub/mt7668-driver/actions/workflows/release.yml/badge.svg)](https://github.com/elsangithub/mt7668-driver/actions/workflows/release.yml)
+[![Release](https://img.shields.io/badge/release-v2.0.0-blue.svg)](https://github.com/elsangithub/mt7668-driver/releases)
+[![Build & Release](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/elsangithub/mt7668-driver/actions)
 [![DKMS Ready](https://img.shields.io/badge/DKMS-Automated_Build-brightgreen.svg)](https://github.com/elsangithub/mt7668-driver)
 [![License: Dual BSD/GPL](https://img.shields.io/badge/License-Dual_BSD%2FGPL-blue.svg)](LICENSE)
 

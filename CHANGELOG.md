@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0] - 2026-11-02
 
 ### 🚀 Major Architectural Leap (Elsangithub Production Release)
-This release represents a major evolutionary jump for the MediaTek MT7668 SDIO Wi-Fi driver, bringing it to full functional and packaging parity with the acclaimed `mt7663-driver` ecosystem. The headline capability is the porting and introduction of **Dedicated AP Mode (`ap_mode` / `ap0`)**, turning FiberHome HG680-FJ (Amlogic S905X2 / Meson G12A) TV boxes into enterprise-grade 5 GHz 802.11ac Hotspot Routers and Wi-Fi Repeaters.
+This release represents a major evolutionary jump for the MediaTek MT7668 SDIO Wi-Fi driver, bringing it to full functional, throughput, and packaging parity with the acclaimed `mt7663-driver` ecosystem. The headline capability is the porting and introduction of **Dedicated AP Mode (`ap_mode` / `ap0`)**, turning FiberHome HG680-FJ (Amlogic S905X2 / Meson G12A) TV boxes into enterprise-grade 5 GHz 802.11ac Hotspot Routers and Wi-Fi Repeaters.
 
 ### Added
 - **Dedicated AP Mode & Modular Kernel Parameter (`ap_mode`)**:
@@ -19,18 +19,30 @@ This release represents a major evolutionary jump for the MediaTek MT7668 SDIO W
     - `ap_mode=1`: Dedicated SoftAP mode. Automatically registers and instantiates the virtual interface `ap0` alongside `wlan0` at driver probe time. Ideal for companion routing packages like `mt7663-router-webui` and standalone `hostapd`.
     - `ap_mode=2`: Dual AP mode (dual AP virtual interfaces).
     - `ap_mode=3`: P2P + AP concurrent mode.
-  - Added build-time override `CFG_DRIVER_INITIAL_RUNNING_MODE` in `Makefile`.
   - Added configuration template file `/etc/modprobe.d/mt7668.conf`.
+- **Native SMP Multi-Core CPU Affinity in Kernel C (`gl_kal.c`)**:
+  - Implemented `set_cpus_allowed_ptr` on `hif_thread`, `rx_thread`, and `main_thread` directly inside kernel thread entry points.
+  - Automatically isolates all network traffic processing from CPU0 (`cpumask_clear_cpu(0, &mask)`), balancing worker threads dynamically across CPU 1, 2, and 3 to prevent CPU0 bottlenecks.
+- **FIFO Underflow & Overflow Fast-Path (`nic/nic.c`)**:
+  - Implemented instant hardware interrupt acknowledgement and fast-path clearing for `WASR_RX0_UNDER_FLOW`, `WASR_RX1_UNDER_FLOW`, and `WASR_TX1_OVER_FLOW`.
+  - Prevents SDIO bus stalls and chip panic resets (`glResetTrigger`) during heavy bidirectional traffic floods.
+- **Dynamic Hardware IRQ Balancing & RPS Rules**:
+  - Bundled `/usr/lib/udev/wlan-irq-tune.sh` and `/etc/udev/rules.d/99-wlan-performance.rules`.
+  - Automatically migrates SDIO hardware interrupts (`ffe03000.mmc`) to CPU 2 and 3 (`smp_affinity_list: 2,3`).
+  - Activates Receive Packet Steering (RPS mask `e` / `0b1110`) on `wlan0` to offload TCP/IP network stack processing to CPU 1, 2, and 3.
+- **Hard Dummy Bluetooth Driver Blacklist**:
+  - Enforced `install btmtksdio /bin/true`, `install btmtk /bin/true`, and in-tree `mt76` driver blacklists in `/etc/modprobe.d/blacklist-mt7668-bluetooth.conf` to completely prevent SDIO bus collision on boot.
+- **Automatic Firmware Backup & Clean Firmware Bundle**:
+  - Bundled clean, verified firmware files in `system/lib/firmware/` (`EEPROM_MT7668.bin`, `TxPwrLimit_MT76x8.dat`, `WIFI_RAM_CODE_MT7668.bin`, `WIFI_RAM_CODE2_SDIO_MT7668.bin`, `mt7668_patch_e2_hdr.bin`, `wifi.cfg`).
+  - Added automated preinst safety routine creating `/lib/firmware/backup_stock_mt7668/` before package extraction.
 - **Modern Debian Packaging Architecture (`debian/`)**:
-  - Transitioned from temporary inline packaging to standard, versioned `debian/` directory structure (`control`, `preinst`, `postinst`, `prerm`).
-  - Added intelligent DKMS self-healing in `postinst` (detects and cleans legacy versions, rebuilds `modpost` if host glibc toolchain mismatches).
-  - Included kernel header availability checks in `preinst`.
-  - Upgraded build automation in `build-deb.sh` to package `mt7668-dkms_2.0.0_all.deb`.
-- **Bilingual Documentation**:
-  - Created Indonesian documentation (`README.id.md`) for Indonesian STB and OpenWrt/Armbian communities.
-  - Rewrote English documentation (`README.md`) with comprehensive AP mode guides, architecture diagrams, and hardware notes.
+  - Standardized versioned `debian/` directory structure (`control`, `preinst`, `postinst`, `prerm`).
+  - Automated DKMS self-healing in `postinst` (detects and cleans legacy versions, auto-rebuilds `modpost` if host glibc toolchain mismatches).
+  - Automated CI/CD release workflow via GitHub Actions (`.github/workflows/release.yml`).
 
 ### Changed
+- **Balanced Thermal Profile (`wifi.cfg`)**:
+  - Fine-tuned queue loops (`HifTxLoop 16`, `OsTxLoop 8`) and disabled unnecessary VHT beamforming/STBC calculation for cooler daily operation (~53 °C).
 - **DKMS Configuration (`dkms.conf`)**:
   - Upgraded `PACKAGE_VERSION` to `"2.0.0"`.
 - **Kernel 6.8+ & Modern Upstream Compatibility**:

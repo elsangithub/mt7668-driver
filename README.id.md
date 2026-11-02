@@ -1,37 +1,153 @@
-# Driver Linux DKMS MediaTek MT7668 SDIO Wi-Fi (v2.0.0)
+<p align="right">
+  <a href="README.md">English</a> | <b>Bahasa Indonesia</b>
+</p>
 
-[![Release](https://img.shields.io/badge/release-v2.0.0-blue.svg)](https://github.com/elsangithub/mt7668-driver/releases)
-[![DKMS](https://img.shields.io/badge/DKMS-aktif-brightgreen.svg)](https://github.com/elsangithub/mt7668-driver)
-[![Kernel](https://img.shields.io/badge/kernel-6.1--6.18+-orange.svg)](https://github.com/elsangithub/mt7668-driver)
-[![Hardware](https://img.shields.io/badge/perangkat-FiberHome%20HG680--FJ%20(S905X2)-purple.svg)](https://github.com/elsangithub/mt7668-driver)
-[![Lisensi](https://img.shields.io/badge/lisensi-Dual%20BSD%2FGPL-green.svg)](LICENSE)
-[![English Guide](https://img.shields.io/badge/read-English-blue.svg)](README.md)
+# Driver Wi-Fi MediaTek MT7668 SDIO untuk TV Box Amlogic (Armbian Ophub)
 
-Driver kernel Linux out-of-tree berbasis DKMS siap pakai untuk modul Wi-Fi combo **MediaTek MT7668** (SDIO `037a:7608` / `037a:6602`) 802.11ac 2x2. Dirancang khusus untuk kernel Linux ARM64 modern (Linux 6.1 LTS, 6.6 LTS, 6.12 LTS, hingga 6.18+) pada STB Android TV Amlogic (seperti **FiberHome HG680-FJ**, Amlogic S905X2 / Meson G12A), Debian 12 Bookworm, dan Ubuntu 24.04 Noble.
+[![Release](https://img.shields.io/github/v/release/elsangithub/mt7668-driver?color=blue&label=release)](https://github.com/elsangithub/mt7668-driver/releases)
+[![Build & Release](https://github.com/elsangithub/mt7668-driver/actions/workflows/release.yml/badge.svg)](https://github.com/elsangithub/mt7668-driver/actions/workflows/release.yml)
+[![DKMS Ready](https://img.shields.io/badge/DKMS-Automated_Build-brightgreen.svg)](https://github.com/elsangithub/mt7668-driver)
+[![License: Dual BSD/GPL](https://img.shields.io/badge/License-Dual_BSD%2FGPL-blue.svg)](LICENSE)
+
+Driver kernel Linux *out-of-tree* berkinerja tinggi berbasis DKMS yang telah di-*patch* khusus untuk modul **MediaTek MT7668** (SDIO ID `037A:7608` / `037A:6602`) dual-band 802.11a/b/g/n/ac 2x2 MIMO.
+
+Dioptimalkan secara khusus untuk mengatasi batasan arsitektur pengontrol SDIO Amlogic G12A (S905X2), dan telah diuji serta divalidasi langsung secara fisik pada perangkat **FiberHome HG680-FJ**.
+
+> [!NOTE]
+> **Lingkungan yang Telah Teruji & Tervalidasi:**
+> Driver ini telah diuji dan diverifikasi secara langsung pada rilis **Armbian by Ophub**:
+> - **Debian 13 (Trixie)** dengan kernel **`6.12.112-ophub`**
+> - Target Board: **FiberHome HG680-FJ (Amlogic S905X2 / Meson G12A)**
+>
+> Rilis Ophub memuat penyesuaian khusus pada Device Tree (DTB) dan subsistem clock/daya untuk TV box Amlogic.
+
+> [!WARNING]
+> **Pernyataan Kompatibilitas untuk Versi Kernel Lain:**
+> Meskipun arsitektur DKMS memungkinkan kompilasi otomatis pada versi Linux lainnya, **tetap ada kemungkinan driver belum cocok 100%** dengan rilis kernel yang belum pernah kami uji (misalnya kernel *mainline vanilla*, kernel non-LTS, atau rilis kernel masa depan yang mengubah struktur API jaringan internal Linux). Jika Anda menemukan kegagalan kompilasi atau masalah saat dijalankan di versi kernel lain, silakan buat laporan kendala di menu *GitHub Issues* dengan melampirkan log `uname -a` dan `dmesg`.
 
 ---
 
-## 🌟 Apa yang Baru di Versi 2.0.0 (Rilis Major Elsangithub)
+## 🔍 Kompatibilitas Hardware & Varian Chipset FiberHome HG680-FJ
 
-Versi **2.0.0** membawa driver MT7668 ke standar keandalan dan kelengkapan fitur yang setara dengan ekosistem driver **`mt7663-driver`**:
+Perangkat STB **FiberHome HG680-FJ** (Amlogic S905X2 / G12A) di pasaran beredar dengan **dua varian modul Wi-Fi internal** tergantung batch produksi pabrik:
 
-1. **📡 Dukungan Dedicated Mode SoftAP / Hotspot (`ap_mode` & `ap0`)**:
-   Menghadirkan parameter kernel modular `ap_mode`. Driver kini dapat secara dinamis mengaktifkan interface virtual khusus (**`ap0`**) berdampingan dengan `wlan0` saat proses probe, memungkinkan STB FiberHome HG680-FJ difungsikan sebagai Router Hotspot Wi-Fi 5 GHz berkecepatan tinggi atau Repeater Wi-Fi. Kompatibel penuh dengan `hostapd` dan dashboard router seperti [`mt7663-router-webui`](https://github.com/elsangithub/mt7663-router-webui).
-2. **🐧 Kompatibilitas Kernel Linux Modern (Linux 6.8+)**:
-   Menyelaraskan API `cfg80211` modern (`cfg80211_cac_event`, `cfg80211_ch_switch_notify`, dan isolasi livepatch symbol) sehingga kompilasi DKMS berjalan mulus tanpa error modpost.
-3. **📦 Sistem Paket Debian DKMS Standar (`debian/`)**:
-   Struktur paket Debian terstandarisasi dengan mekanisme *self-healing* otomatis, deteksi header kernel cerdas, dan proses upgrade bebas konflik.
+| Varian Hardware | Modul Fisik | Core Chipset Internal | Driver Linux yang Digunakan |
+| :--- | :--- | :--- | :--- |
+| **Varian A** | MediaTek MT7668 | **MediaTek MT7668** (`037A:7608` / `037A:6602`) | **Driver DKMS ini (`mt7668-dkms`)** |
+| **Varian B** | AMPAK MT7661RSN | MediaTek MT7663 (`037A:7663`) | [elsangithub/mt7663-driver](https://github.com/elsangithub/mt7663-driver) |
+
+- **Unit MT7668 (Varian A)**: Membutuhkan paket DKMS ini (**`mt7668-dkms`**) agar Wi-Fi Dual-Band 2.4 GHz & 5 GHz dapat diinisialisasi secara penuh dan stabil.
+- **Unit AMPAK MT7661RSN / MT7663 (Varian B)**: Membutuhkan paket terpisah `mt7663-dkms`.
+- **Koeksistensi Bersih**: Paket ini mengisolasi konfigurasi firmware ke `/lib/firmware/wifi.cfg` dan blacklist modul yang bersih, sehingga aman jika Anda membangun image sistem bersama.
+
+### Cara Memeriksa Varian Chipset di STB Anda:
+Jalankan perintah berikut di terminal STB:
+```bash
+cat /sys/bus/sdio/devices/*/device 2>/dev/null || cat /sys/bus/sdio/devices/*/vendor 2>/dev/null
+```
+* Jika terminal menampilkan `0x7608` atau `0x6602` (dengan vendor `0x037a`), maka unit Anda menggunakan modul **MediaTek MT7668** dan membutuhkan driver ini!
+* Jika menampilkan `0x7663` atau `0x7603`, maka unit Anda menggunakan modul **MediaTek MT7663**.
+
+---
+
+## 🚀 Fitur Unggulan Versi 2.0.0 (Hasil Pengujian Nyata)
+
+- **Pure Standalone Wi-Fi**: 100% stabil beroperasi mandiri tanpa perlu kabel LAN terhubung (`eth0` down).
+- **Dual-Band 2.4 GHz & 5 GHz VHT80**: Mendukung 802.11ac 2x2 MIMO dengan kecepatan fisik link (PHY Rate) hingga **867 Mbps**, tembus **95.66 Mbps throughput nyata** dengan latensi ultra-rendah (Ping 3 ms, 0.0% packet loss).
+- **Dedicated SoftAP / Hotspot Mode (`ap_mode=1`)**: Mendukung pembuatan antarmuka virtual **`ap0`** secara simultan berdampingan dengan `wlan0` untuk mode Router Hotspot 5 GHz atau Wi-Fi Repeater.
+- **Native SMP Multi-Core CPU Affinity**: Tiga kthread utama driver (`hif_thread`, `rx_thread`, dan `main_thread`) dipatok langsung dari tingkat kernel C (`set_cpus_allowed_ptr`) ke CPU 1, 2, dan 3, membebaskan **CPU0** secara permanen.
+- **Dynamic Hardware IRQ Routing**: Interupsi bus SDIO (`ffe03000.mmc`) dialihkan otomatis ke CPU 2 dan 3 melalui udev script, menjaga timer sistem di CPU0 tetap responsif tanpa lag.
+- **RPS Network Packet Steering**: Pemrosesan antrean paket jaringan dioper ke CPU 1, 2, 3 (`rps_cpus: e`), melipatgandakan throughput tanpa bottleneck.
+- **FIFO Underflow & Overflow Fast-Path**: Penanganan instan register interrupt `WASR_RX0/1_UNDER_FLOW` dan `WASR_TX1_OVER_FLOW` di `nic.c`, mencegah chip panik reset saat lalu lintas data padat (*traffic flood*).
+- **Hard Dummy Bluetooth Driver Blacklist**: Mencegah konflik driver SDIO Bluetooth bawaan kernel Linux (`btmtksdio` / `btmtk`) menggunakan teknik `install ... /bin/true` agar inisialisasi boot tidak macet.
+- **Zero-Hang Warm Reboot**: Integrasi `mt7668-shutdown.service` memutus controller MMC SDIO sebelum sistem shutdown, menjamin deteksi hardware tetap 100% mulus saat restart (`sudo reboot`).
+- **Profil Termal Seimbang**: Parameter radio disetel optimal sehingga suhu SoC STB tetap adem dan stabil di kisaran **~53 °C**.
+
+---
+
+## 📦 Panduan Instalasi (Armbian Ophub)
+
+> [!IMPORTANT]
+> **JANGAN menjalankan `apt install linux-headers-$(uname -r)` di Armbian Ophub!**  
+> Repositori standar Debian/Ubuntu tidak menyediakan kernel custom Ophub. Di Armbian Ophub, header kernel **sudah terpasang otomatis** di direktori `/usr/src/linux-headers-$(uname -r)`.
+
+### Langkah 1: Pasang Paket Pendukung Build & DKMS
+```bash
+sudo apt update
+sudo apt install -y dkms build-essential wget
+```
+
+### Langkah 2: Verifikasi Keberadaan Kernel Headers
+```bash
+ls -d /usr/src/linux-headers-$(uname -r)
+```
+*(Jika direktori muncul, sistem Anda siap 100% untuk kompilasi DKMS).*
+
+### Langkah 3: Unduh & Pasang Paket Debian (.deb)
+```bash
+# Unduh paket rilis resmi terbaru (v2.0.0)
+wget https://github.com/elsangithub/mt7668-driver/releases/download/v2.0.0/mt7668-dkms_2.0.0_all.deb
+
+# Pasang paket (DKMS akan otomatis mengompilasi modul untuk kernel aktif dalam ~15-20 detik)
+sudo dpkg -i mt7668-dkms_2.0.0_all.deb
+```
+
+### Langkah 4: Muat Driver atau Reboot
+Driver langsung aktif setelah instalasi. Untuk memastikan semua konfigurasi udev dan layanan tersinkronisasi sempurna:
+```bash
+sudo reboot
+```
+
+---
+
+## 📶 Menghubungkan & Memverifikasi Wi-Fi
+
+### Langkah 1: Pindai Jaringan Wi-Fi yang Tersedia:
+```bash
+nmcli device wifi list
+```
+
+### Langkah 2: Hubungkan ke Jaringan Wi-Fi via Terminal:
+```bash
+# Hubungkan ke SSID Wi-Fi
+sudo nmcli dev wifi connect "NAMA_SSID_ANDA" password "PASSWORD_WIFI"
+
+# Simpan profil permanen ke penyimpanan
+sync
+```
+
+### Langkah 3: Periksa Status Koneksi & Kecepatan Link Fisik:
+```bash
+iw dev wlan0 link
+```
+*Contoh output (Frekuensi 5 GHz)*:
+```text
+Connected to e8:43:68:3e:27:3e (on wlan0)
+	SSID: Elsan_5G
+	freq: 5785.0
+	signal: -47 dBm
+	tx bitrate: 173.0 MBit/s (naik otomatis saat traffic padat hingga 867 Mbps)
+```
+
+### Verifikasi Distribusi IRQ Multi-Core:
+```bash
+grep -E "CPU|mmc" /proc/interrupts
+```
+*Interupsi SDIO (`ffe03000.mmc`) akan terdistribusi ke **CPU2 / CPU3**, menjaga **CPU0** tetap bebas beban.*
 
 ---
 
 ## 📡 Mode Hotspot / SoftAP & Parameter Modular `ap_mode`
 
-Driver dilengkapi dengan parameter modul `ap_mode` yang dapat dikonfigurasi melalui berkas `/etc/modprobe.d/mt7668.conf`:
+Mulai dari **v2.0.0**, driver kernel `wlan_mt7668` memperkenalkan dukungan modular **Dedicated AP Mode** dengan antarmuka virtual independen **`ap0`**.
+
+### Parameter Modul Kernel `ap_mode`:
+Driver menyediakan parameter kernel yang dapat dikonfigurasi melalui berkas `/etc/modprobe.d/mt7668.conf`:
 
 | Nilai | Deskripsi Mode | Skenario Penggunaan |
 | :---: | :--- | :--- |
 | **`ap_mode=0`** *(Bawaan)* | **Mode Klien Murni (STA)** (`wlan0` saja) | Penggunaan standar desktop, server, atau TV box klien. Sangat ringan tanpa overhead. |
-| **`ap_mode=1`** | **Dedicated AP Mode** (`ap0` + `wlan0`) | Hotspot router, repeater Wi-Fi, atau dipasangkan dengan `mt7663-router-webui` / `hostapd`. |
+| **`ap_mode=1`** | **Dedicated AP Mode** (`ap0` + `wlan0`) | Hotspot router, repeater Wi-Fi, atau dipasangkan dengan Web UI Hotspot / `hostapd`. |
 | **`ap_mode=2`** | **Dual AP Mode** | Menjalankan dua interface AP virtual sekaligus. |
 | **`ap_mode=3`** | **Mode Konkuren P2P + AP** | Wi-Fi Direct berjalan bersamaan dengan access point. |
 
@@ -39,104 +155,38 @@ Driver dilengkapi dengan parameter modul `ap_mode` yang dapat dikonfigurasi mela
 Jalankan perintah berikut agar interface `ap0` otomatis aktif saat boot:
 ```bash
 echo "options wlan_mt7668 ap_mode=1" | sudo tee /etc/modprobe.d/mt7668.conf
-sudo modprobe -r wlan_mt7668 2>/dev/null || true
-sudo modprobe wlan_mt7668
-ip link show
-```
-
-Untuk mengembalikan ke mode klien standar (`wlan0` saja):
-```bash
-echo "options wlan_mt7668 ap_mode=0" | sudo tee /etc/modprobe.d/mt7668.conf
-sudo modprobe -r wlan_mt7668 2>/dev/null || true
-sudo modprobe wlan_mt7668
-```
-
----
-
-## 🚀 Performa Teruji (FiberHome HG680-FJ)
-
-Diuji langsung pada perangkat **FiberHome HG680-FJ (Amlogic S905X2 / Meson G12A)** menjalankan **Armbian (Ubuntu 24.04 Noble / Debian 12 Bookworm)** kernel `Linux 6.12.x-ophub` dan `6.18.x-ophub`:
-
-- **Dmesg Bersih**: Nol spam log `[wlan]` (`DBG_DISABLE_ALL_LOG 1`).
-- **Kestabilan Daya**: Penonaktifan sleep otomatis (`CFG_ENABLE_FULL_PM 0`) untuk menjaga sinkronisasi clock SDIO.
-- **Dukungan DKMS**: Modul otomatis dikompilasi ulang secara otomatis saat update kernel.
-- **Kecepatan Terverifikasi (iperf3 ke server lokal)**:
-  - **Band 5 GHz (Kanal 157, link rate 405–780 Mbps)**:
-    - **Upload (TX)**: **94.2 Mbps** (0 retransmit)
-    - **Download (RX)**: **50.2 Mbps**
-  - **Band 2.4 GHz (Kanal 6)**:
-    - **Upload (TX)**: **81.2 Mbps** (0 retransmit)
-    - **Download (RX)**: **26.9 Mbps**
-
-```text
-[ ID] Interval           Transfer     Bitrate         Retr
-[  5]   0.00-10.00  sec   112 MBytes  94.2 Mbits/sec    0   sender
-[  5]   0.00-10.00  sec   110 MBytes  92.5 Mbits/sec        receiver
-```
-
----
-
-## 📦 Cara Pemasangan / Instalasi
-
-### Pilihan A: Pasang via Paket Debian (.deb) — Sangat Disarankan
-```bash
-sudo apt update
-sudo apt install -y dkms build-essential linux-headers-$(uname -r) wget
-wget https://github.com/elsangithub/mt7668-driver/releases/download/v2.0.0/mt7668-dkms_2.0.0_all.deb
-sudo dpkg -i mt7668-dkms_2.0.0_all.deb
 sudo reboot
 ```
+Setelah reboot, antarmuka `ap0` akan muncul mandiri berdampingan dengan `wlan0`.
 
-### Pilihan B: Kompilasi & Bangun Paket Debian dari Source Code
+---
+
+## 🌐 Kompatibilitas dengan Web UI Router
+
+Arsitektur modular `ap_mode=1` pada driver ini dirancang agar kompatibel dengan ekosistem router web UI (seperti [`mt7663-router-webui`](https://github.com/elsangithub/mt7663-router-webui)). Antarmuka web dapat secara dinamis mengorkestrasi `hostapd`, alokasi DHCP/DNS `dnsmasq`, serta NAT Masquerade tanpa perlu mengutak-atik kode driver kernel.
+
+---
+
+## 🗑️ Cara Hapus Bersih (Clean Uninstallation)
+
+Jika Anda ingin mencopot pemasangan driver ini dan mengembalikan sistem ke kondisi semula, paket ini dilengkapi dengan script pembersih otomatis (`prerm` dan `postrm`):
+
+### Hapus Bersih Total Termasuk Seluruh Konfigurasi (Purge):
 ```bash
-git clone https://github.com/elsangithub/mt7668-driver.git
-cd mt7668-driver
-chmod +x build-deb.sh
-./build-deb.sh
-sudo dpkg -i mt7668-dkms_2.0.0_all.deb
-sudo reboot
+sudo apt purge -y mt7668-dkms
 ```
 
----
-
-## 🔧 Konfigurasi Kritis untuk STB FiberHome HG680-FJ
-
-Pada STB Amlogic seperti FiberHome HG680-FJ, terdapat dua karakteristik perangkat keras yang memerlukan penanganan khusus di tingkat OS. Keduanya telah dibundel di dalam direktori `system/` dan otomatis diterapkan oleh paket `.deb`:
-
-### 1. Blacklist Bluetooth (`system/etc/modprobe.d/blacklist-mt7668-bluetooth.conf`)
-- **Penyebab**: MT7668 merupakan chip combo Wi-Fi + Bluetooth. Di kernel Linux, modul bawaan `btmtksdio` mencoba mendeteksi Bluetooth pada SDIO Function 2. Pada board STB tanpa jalur firmware MTK BT khusus, `btmtksdio` mengalami timeout (`error -110`) yang mengunci bus SDIO.
-- **Solusi**: Memasukkan `btmtksdio` dan `btmtk` ke dalam blacklist sehingga bus SDIO dialokasikan 100% secara bersih hanya untuk Wi-Fi (`wlan_mt7668`).
-
-### 2. Service SDIO Quiesce Shutdown (`system/etc/systemd/system/mt7668-shutdown.service`)
-- **Penyebab**: Modul MT7668 pada FiberHome HG680-FJ terhubung ke jalur tegangan selalu-aktif (*always-on rails*: `VDDAO_3V3` dan `VDDAO_1V8`). Saat reboot melalui software (`reboot`), SoC Amlogic me-reset sementara chip MT7668 tetap menyala. Jika koneksi SDIO tidak diputus secara bersih sebelum SoC mati, *state machine* MT7668 akan terkunci dan gagal merespons perintah probe CMD5 saat menyala kembali (`error -110`).
-- **Solusi**: Service `mt7668-shutdown.service` berjalan saat proses shutdown dan reboot:
-  ```bash
-  if [ -d /sys/bus/platform/drivers/meson-gx-mmc/ffe03000.sd ]; then
-      echo ffe03000.sd > /sys/bus/platform/drivers/meson-gx-mmc/unbind
-  fi
-  ```
-  Perintah ini melepas (*unbind*) host controller SDIO (`ffe03000.sd`) tepat sebelum sistem reset, menjamin MT7668 terdeteksi 100% normal pada warm reboot tanpa perlu cabut adaptor daya.
+#### Apa yang Dibersihkan Secara Otomatis Saat Penghapusan?
+1. Menghentikan antarmuka Wi-Fi (`ip link set dev wlan0 down`).
+2. Meng-*unload* modul kernel dari memori RAM (`rmmod wlan_mt7668`).
+3. Menghapus pendaftaran DKMS dan binari modul yang terkompilasi dari `/var/lib/dkms/mt7668/`.
+4. Menghapus konfigurasi autoload di `/etc/modules-load.d/wlan_mt7668.conf`.
+5. Menonaktifkan dan menghapus layanan `/etc/systemd/system/mt7668-shutdown.service`.
+6. Menghapus skrip dan aturan udev IRQ tuning di `/etc/udev/rules.d/99-wlan-performance.rules`.
+7. Mengembalikan backup firmware bawaan dari `/lib/firmware/backup_stock_mt7668/` jika tersedia.
 
 ---
 
-## 🛠 Rangkuman Patch & Optimasi Driver
-
-1. **Auto-Spawn Interface AP (`gl_init.c`)**: Menambahkan parameter `ap_mode` dan probe hook untuk memunculkan `ap0` (`RUNNING_AP_MODE`).
-2. **Harmonisasi Kernel Linux 6.8+ (`gl_p2p_kal.c` & `p2p_func.c`)**: Menyesuaikan deklarasi argumen `cfg80211_cac_event` dan `cfg80211_ch_switch_notify`.
-3. **Keamanan Livepatch Symbol (`gl_kal.c`)**: Menghindari kegagalan modpost akibat `kallsyms_on_each_symbol` non-ekspor pada Linux $\ge$ 5.7.
-4. **Pembatasan Ukuran Paket DMA (`config.h`)**: Membatasi `CFG_TX_MAX_PKT_SIZE` ke 1408 byte guna mencegah buffer overflow pada DMA controller `meson-gx-mmc`.
-5. **Peredaman Log Spam (`debug.h`)**: Mengaktifkan `DBG_DISABLE_ALL_LOG 1` untuk menjamin `dmesg` bebas spam frame.
-6. **Kompatibilitas Kompiler Universal (`Makefile` & `dkms.conf`)**: Injeksi flag `CONFIG_CC_HAS_MIN_FUNCTION_ALIGNMENT=` agar GCC 12/13/14 dapat mengompilasi pada header kernel modern.
-
----
-
-## 📜 Lisensi
-GPL-2.0 / MediaTek Proprietary Base.
-
----
-
-## 🤝 Kredit & Penghargaan
-- **MediaTek Inc.**: Basis kode driver asli MT6632/MT7668.
-- **junglon**: Patch rilis baseline v1.0.3 dan inisiasi adaptasi Amlogic.
-- **Komunitas Ophub & Armbian**: Header kernel dan infrastruktur pengujian Amlogic G12A.
-- **Elsangithub**: Rekayasa Rilis Major v2.0.0, implementasi Dedicated AP Mode, standarisasi paket DKMS, dan dokumentasi.
+## 📄 Lisensi
+Driver ini dirilis di bawah lisensi **Dual BSD / GPL-2.0**.
+Lihat berkas [LICENSE](LICENSE) untuk ketentuan lengkap.

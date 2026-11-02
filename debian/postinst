@@ -59,6 +59,13 @@ if [ -d /run/systemd/system ]; then
 fi
 
 ip link set wlan0 up 2>/dev/null || true
+
+# Apply sysctl and udev performance rules (IRQ balancing & RPS)
+sysctl -p /etc/sysctl.d/99-wifi-throughput.conf 2>/dev/null || true
+udevadm control --reload-rules 2>/dev/null || true
+udevadm trigger 2>/dev/null || true
+/usr/lib/udev/wlan-irq-tune.sh 2>/dev/null || true
+
 systemctl restart wpa_supplicant 2>/dev/null || true
 systemctl restart NetworkManager 2>/dev/null || true
 

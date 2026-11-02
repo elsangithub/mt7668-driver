@@ -2647,6 +2647,14 @@ int hif_thread(void *data)
 
 	set_user_nice(current, prGlueInfo->prAdapter->rWifiVar.cThreadNice);
 
+	/* Native SMP CPU Affinity: Keep HIF processing off CPU0 */
+	if (num_online_cpus() > 1) {
+		struct cpumask mask;
+		cpumask_copy(&mask, cpu_online_mask);
+		cpumask_clear_cpu(0, &mask);
+		set_cpus_allowed_ptr(current, &mask);
+	}
+
 	while (TRUE) {
 
 		if (prGlueInfo->ulFlag & GLUE_FLAG_HALT) {
@@ -2750,6 +2758,14 @@ int rx_thread(void *data)
 
 	set_user_nice(current, prGlueInfo->prAdapter->rWifiVar.cThreadNice);
 
+	/* Native SMP CPU Affinity: Keep packet processing off CPU0 */
+	if (num_online_cpus() > 1) {
+		struct cpumask mask;
+		cpumask_copy(&mask, cpu_online_mask);
+		cpumask_clear_cpu(0, &mask);
+		set_cpus_allowed_ptr(current, &mask);
+	}
+
 	prTempRxQue = &rTempRxQue;
 
 	while (TRUE) {
@@ -2848,6 +2864,14 @@ int main_thread(void *data)
 	KAL_WAKE_LOCK(prGlueInfo->prAdapter, &rTxThreadWakeLock);
 
 	DBGLOG(INIT, INFO, "%s:%u starts running...\n", KAL_GET_CURRENT_THREAD_NAME(), KAL_GET_CURRENT_THREAD_ID());
+
+	/* Native SMP CPU Affinity: Keep packet processing off CPU0 */
+	if (num_online_cpus() > 1) {
+		struct cpumask mask;
+		cpumask_copy(&mask, cpu_online_mask);
+		cpumask_clear_cpu(0, &mask);
+		set_cpus_allowed_ptr(current, &mask);
+	}
 
 	while (TRUE) {
 

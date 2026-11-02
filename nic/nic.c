@@ -609,9 +609,20 @@ void nicRestoreSpiDefMode(IN P_ADAPTER_T prAdapter)
 /*----------------------------------------------------------------------------*/
 VOID nicProcessAbnormalInterrupt(IN P_ADAPTER_T prAdapter)
 {
-	UINT_32 u4Value;
+	UINT_32 u4Value = 0;
 
 	HAL_MCR_RD(prAdapter, MCR_WASR, &u4Value);
+	if (u4Value) {
+		HAL_MCR_WR(prAdapter, MCR_WASR, u4Value);
+	}
+
+	/* Fast-path: clear transient RX FIFO underflows and TX overflow instantly without stalling SDIO bus or spamming logs */
+	if (u4Value & (WASR_RX0_UNDER_FLOW | WASR_RX1_UNDER_FLOW | WASR_TX1_OVER_FLOW)) {
+		u4Value &= ~(WASR_RX0_UNDER_FLOW | WASR_RX1_UNDER_FLOW | WASR_TX1_OVER_FLOW);
+		if (!u4Value)
+			return;
+	}
+
 	DBGLOG(REQ, WARN, "MCR_WASR: 0x%lx\n", u4Value);
 #if CFG_CHIP_RESET_SUPPORT
 	glResetTrigger(prAdapter);

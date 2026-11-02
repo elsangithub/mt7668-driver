@@ -2,82 +2,37 @@
 set -e
 
 PACKAGE=mt7668-dkms
-VERSION=1.0.3
+DEFAULT_VERSION=$(grep -E "^[[:space:]]*PACKAGE_VERSION=" dkms.conf 2>/dev/null | cut -d'"' -f2)
+VERSION=${1:-${DEFAULT_VERSION:-2.0.0}}
+TARGET_DEB="${PACKAGE}_${VERSION}_all.deb"
+
 BUILD_DIR=/tmp/${PACKAGE}_build
 SRC_DIR=${BUILD_DIR}/usr/src/mt7668-${VERSION}
 
-echo "Building Debian package for ${PACKAGE}_${VERSION}..."
+echo "Building Debian package for Release v${VERSION} (${TARGET_DEB})..."
 
 rm -rf ${BUILD_DIR}
 mkdir -p ${SRC_DIR}
 mkdir -p ${BUILD_DIR}/DEBIAN
-mkdir -p ${BUILD_DIR}/etc/modprobe.d
-mkdir -p ${BUILD_DIR}/etc/systemd/system
 
-# Copy source tree to /usr/src/mt7668-${VERSION} for DKMS
-rsync -a --exclude=".git" --exclude="*.o" --exclude="*.ko" --exclude="*.mod" --exclude="*.mod.c" --exclude="*.cmd" --exclude="*.deb" ./ ${SRC_DIR}/
+# 1. Copy pure driver source code directly
+cp -a chips common include mgmt nic os prealloc Makefile Kconfig dkms.conf ${SRC_DIR}/
+[ -f CHANGELOG.md ] && cp -a CHANGELOG.md ${SRC_DIR}/
+[ -f README.md ] && cp -a README.md ${SRC_DIR}/
+sed -i "s/PACKAGE_VERSION=\".*\"/PACKAGE_VERSION=\"${VERSION}\"/" ${SRC_DIR}/dkms.conf
+find ${SRC_DIR} -type f \( -name "*.o" -o -name "*.o.d" -o -name "*.cmd" -o -name "*.ko" -o -name "*.mod*" \) -delete
 
-# Copy system configurations and service files into the debian package root
-cp system/etc/modprobe.d/blacklist-mt7668-bluetooth.conf ${BUILD_DIR}/etc/modprobe.d/
-cp system/etc/systemd/system/mt7668-shutdown.service ${BUILD_DIR}/etc/systemd/system/
+# 2. Copy system integration files (bluetooth blacklist, shutdown service, modprobe template)
+cp -a system/* ${BUILD_DIR}/
 
-cat << CTRL > ${BUILD_DIR}/DEBIAN/control
-Package: ${PACKAGE}
-Version: ${VERSION}
-Architecture: all
-Maintainer: junglon <https://github.com/junglon/mt7668-driver>
-Depends: dkms, build-essential
-Section: kernel
-Priority: optional
-Description: MediaTek MT7668 SDIO Wi-Fi driver module (DKMS)
- Patched out-of-tree Linux kernel driver for MediaTek MT7668 SDIO Wi-Fi,
- modified for Linux 6.12+, 6.18+ and Amlogic TV boxes (e.g. ZTE B860H V5).
- Includes Bluetooth blacklist and SDIO shutdown service for reliable warm reboots.
-CTRL
+# 3. Copy Debian package control scripts
+cp -a debian/* ${BUILD_DIR}/DEBIAN/
+sed -i "s/^Version:.*/Version: ${VERSION}/" ${BUILD_DIR}/DEBIAN/control
+sed -i "s/VERSION=\".*\"/VERSION=\"${VERSION}\"/" ${BUILD_DIR}/DEBIAN/postinst ${BUILD_DIR}/DEBIAN/prerm
+chmod 755 ${BUILD_DIR}/DEBIAN
+chmod 755 ${BUILD_DIR}/DEBIAN/preinst ${BUILD_DIR}/DEBIAN/postinst ${BUILD_DIR}/DEBIAN/prerm
 
-cat << POST > ${BUILD_DIR}/DEBIAN/postinst
-#!/bin/sh
-set -e
-
-echo "Registering mt7668 (${VERSION}) with DKMS..."
-dkms remove -m mt7668 -v ${VERSION} --all 2>/dev/null || true
-dkms add -m mt7668 -v ${VERSION} || true
-dkms build -m mt7668 -v ${VERSION} || true
-dkms install -m mt7668 -v ${VERSION} || true
-
-echo "Configuring automatic kernel module loading..."
-echo wlan_mt7668 > /etc/modules-load.d/wlan_mt7668.conf
-depmod -a
-modprobe wlan_mt7668 2>/dev/null || true
-
-# Unload non-functional upstream Bluetooth module if currently loaded
-modprobe -r btmtksdio btmtk 2>/dev/null || true
-
-# Enable SDIO unbind service on shutdown/reboot to guarantee clean MT7668 hardware reset
-if [ -d /run/systemd/system ]; then
-    systemctl daemon-reload 2>/dev/null || true
-    systemctl enable mt7668-shutdown.service 2>/dev/null || true
-fi
-POST
-chmod 755 ${BUILD_DIR}/DEBIAN/postinst
-
-cat << PRE > ${BUILD_DIR}/DEBIAN/prerm
-#!/bin/sh
-set -e
-
-echo "Removing mt7668 (${VERSION}) from DKMS..."
-modprobe -r wlan_mt7668 2>/dev/null || true
-dkms remove -m mt7668 -v ${VERSION} --all 2>/dev/null || true
-rm -f /etc/modules-load.d/wlan_mt7668.conf
-
-if [ -d /run/systemd/system ]; then
-    systemctl disable mt7668-shutdown.service 2>/dev/null || true
-    systemctl daemon-reload 2>/dev/null || true
-fi
-PRE
-chmod 755 ${BUILD_DIR}/DEBIAN/prerm
-
-dpkg-deb --build ${BUILD_DIR} ${PACKAGE}_${VERSION}_all.deb
+dpkg-deb --build ${BUILD_DIR} ${TARGET_DEB}
 rm -rf ${BUILD_DIR}
 
-echo "Package created successfully: ${PACKAGE}_${VERSION}_all.deb"
+echo "Package created successfully: ${TARGET_DEB}"

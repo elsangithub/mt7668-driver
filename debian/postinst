@@ -1,0 +1,65 @@
+#!/bin/sh
+set -e
+
+VERSION="2.0.0"
+
+# Detect existing registrations dynamically
+OLD_VERSIONS=$(dkms status -m mt7668 2>/dev/null | awk -F'[/,]' '{print $2}' | sort -u)
+
+if [ -n "$OLD_VERSIONS" ]; then
+    for VER in $OLD_VERSIONS; do
+        if [ "$VER" != "$VERSION" ]; then
+            echo "Terdeteksi driver mt7668 versi lama ($VER), mencopot versi lama..."
+            dkms remove -m mt7668 -v "$VER" --all 2>/dev/null || true
+        fi
+    done
+else
+    echo "Instalasi bersih terdeteksi (belum ada versi lama di sistem)."
+fi
+
+echo "Registering mt7668 ($VERSION) with DKMS..."
+dkms remove -m mt7668 -v $VERSION --all 2>/dev/null || true
+dkms add -m mt7668 -v $VERSION
+
+# Check if kernel header host tools (modpost) match system glibc, self-heal directly if needed
+KERNEL_BUILD_DIR="/lib/modules/$(uname -r)/build"
+MODPOST_BIN="${KERNEL_BUILD_DIR}/scripts/mod/modpost"
+MOD_DIR="${KERNEL_BUILD_DIR}/scripts/mod"
+if [ -d "$KERNEL_BUILD_DIR" ] && [ -d "$MOD_DIR" ]; then
+    if [ -f "$MODPOST_BIN" ] && ! "$MODPOST_BIN" -h >/dev/null 2>&1; then
+        echo "Menyelaraskan toolchain header kernel (rebuilding modpost untuk glibc lokal)..."
+        EXTRA_SRCS=""
+        [ -f "${MOD_DIR}/symsearch.c" ] && EXTRA_SRCS="${MOD_DIR}/symsearch.c"
+        gcc -O2 -std=gnu11 -I "${KERNEL_BUILD_DIR}/scripts/include" -o "$MODPOST_BIN" \
+            "${MOD_DIR}/modpost.c" \
+            "${MOD_DIR}/file2alias.c" \
+            "${MOD_DIR}/sumversion.c" \
+            $EXTRA_SRCS >/dev/null 2>&1 || true
+    fi
+fi
+
+echo "Building & installing mt7668 ($VERSION) via DKMS..."
+dkms build -m mt7668 -v $VERSION
+dkms install -m mt7668 -v $VERSION
+
+echo "Configuring automatic kernel module loading..."
+echo wlan_mt7668 > /etc/modules-load.d/wlan_mt7668.conf
+depmod -a
+
+# Unload non-functional upstream Bluetooth module if currently loaded
+modprobe -r btmtksdio btmtk 2>/dev/null || true
+
+# Load driver module
+modprobe wlan_mt7668 2>/dev/null || true
+
+# Enable SDIO unbind service on shutdown/reboot to guarantee clean MT7668 hardware reset
+if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload 2>/dev/null || true
+    systemctl enable mt7668-shutdown.service 2>/dev/null || true
+fi
+
+ip link set wlan0 up 2>/dev/null || true
+systemctl restart wpa_supplicant 2>/dev/null || true
+systemctl restart NetworkManager 2>/dev/null || true
+
+echo "mt7668 driver v${VERSION} installed successfully!"

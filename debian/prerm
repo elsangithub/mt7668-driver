@@ -1,0 +1,16 @@
+#!/bin/sh
+set -e
+
+VERSION="2.0.0"
+
+echo "Removing mt7668 ($VERSION) from DKMS..."
+modprobe -r wlan_mt7668 2>/dev/null || true
+dkms remove -m mt7668 -v $VERSION --all 2>/dev/null || true
+rm -f /etc/modules-load.d/wlan_mt7668.conf
+
+if [ -d /run/systemd/system ]; then
+    systemctl disable mt7668-shutdown.service 2>/dev/null || true
+    systemctl daemon-reload 2>/dev/null || true
+fi
+
+depmod -a

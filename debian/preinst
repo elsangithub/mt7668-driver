@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+
+# Cek ketersediaan header kernel untuk proses kompilasi DKMS
+if [ ! -d "/lib/modules/$(uname -r)/build" ] && [ ! -d "/usr/src/linux-headers-$(uname -r)" ]; then
+    echo "======================================================================="
+    echo "  [PERINGATAN] Header kernel ($(uname -r)) tidak ditemukan!"
+    echo "  DKMS membutuhkan header kernel untuk mengompilasi driver."
+    echo "  Silakan pasang header kernel terlebih dahulu:"
+    echo "    apt-get install -y linux-headers-$(uname -r)  ATAU  armbian-config"
+    echo "======================================================================="
+fi
+
+exit 0

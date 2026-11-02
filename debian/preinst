@@ -11,4 +11,29 @@ if [ ! -d "/lib/modules/$(uname -r)/build" ] && [ ! -d "/usr/src/linux-headers-$
     echo "======================================================================="
 fi
 
+# Backup otomatis firmware stock jika ada sebelum ditimpa oleh paket
+BACKUP_DIR="/lib/firmware/backup_stock_mt7668"
+FW_FILES="EEPROM_MT7668.bin mt7668_patch_e2_hdr.bin TxPwrLimit_MT76x8.dat wifi.cfg WIFI_RAM_CODE_MT7668.bin WIFI_RAM_CODE2_SDIO_MT7668.bin"
+
+HAS_STOCK=0
+for f in $FW_FILES; do
+    if [ -f "/lib/firmware/$f" ]; then
+        HAS_STOCK=1
+        break
+    fi
+done
+
+if [ "$HAS_STOCK" -eq 1 ] && [ ! -d "$BACKUP_DIR" ]; then
+    echo "======================================================================="
+    echo "  [INFO] Mencadangkan firmware MT7668 bawaan sistem ke:"
+    echo "         ${BACKUP_DIR}/"
+    echo "======================================================================="
+    mkdir -p "$BACKUP_DIR"
+    for f in $FW_FILES; do
+        if [ -f "/lib/firmware/$f" ]; then
+            cp -a "/lib/firmware/$f" "$BACKUP_DIR/"
+        fi
+    done
+fi
+
 exit 0

@@ -4840,11 +4840,15 @@ static int __maybe_unused __mt_find_tracing_mark_write_symbol_fn(void *prData, c
 	return 0;
 }
 
-#ifdef CONFIG_LIVEPATCH
+#if defined(CONFIG_LIVEPATCH) && (KERNEL_VERSION(5, 7, 0) > LINUX_VERSION_CODE)
 static inline void __mt_update_tracing_mark_write_addr(void)
 {
 	if (unlikely(tracing_mark_write_addr == 0))
 		kallsyms_on_each_symbol(__mt_find_tracing_mark_write_symbol_fn, NULL);
+}
+#else
+static inline void __mt_update_tracing_mark_write_addr(void)
+{
 }
 #endif
 

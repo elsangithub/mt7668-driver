@@ -103,6 +103,10 @@ module_param_named(p2p, gprifnamep2p, charp, 0);
 module_param_named(ap, gprifnameap, charp, 0);
 #endif /* CFG_DRIVER_INF_NAME_CHANGE */
 
+int ap_mode = 0;
+module_param(ap_mode, int, 0644);
+MODULE_PARM_DESC(ap_mode, "Enable dedicated AP interface ap0 alongside wlan0 (1=AP mode, 2=Dual AP, 3=P2P+AP)");
+
 /* NIC interface name */
 #define NIC_INF_NAME    "wlan%d"
 
@@ -2508,20 +2512,28 @@ static INT_32 wlanProbe(PVOID pvData, PVOID pvDriverData)
 #if (CFG_ENABLE_WIFI_DIRECT && MTK_WCN_HIF_SDIO && CFG_SUPPORT_MTK_ANDROID_KK)
 		register_set_p2p_mode_handler(set_p2p_mode_handler);
 #elif (CFG_ENABLE_WIFI_DIRECT)
-		if (prAdapter->rWifiVar.u4RegP2pIfAtProbe) {
+		if (ap_mode || prAdapter->rWifiVar.u4RegP2pIfAtProbe) {
 			PARAM_CUSTOM_P2P_SET_STRUCT_T rSetP2P;
 
 			rSetP2P.u4Enable = 1;
 
+			if (ap_mode == 2)
+				rSetP2P.u4Mode = RUNNING_DUAL_AP_MODE;
+			else if (ap_mode == 3)
+				rSetP2P.u4Mode = RUNNING_P2P_AP_MODE;
+			else if (ap_mode == 1)
+				rSetP2P.u4Mode = RUNNING_AP_MODE;
+			else {
 #ifdef CFG_DRIVER_INITIAL_RUNNING_MODE
-			rSetP2P.u4Mode = CFG_DRIVER_INITIAL_RUNNING_MODE;
+				rSetP2P.u4Mode = CFG_DRIVER_INITIAL_RUNNING_MODE;
 #else
-			rSetP2P.u4Mode = RUNNING_P2P_MODE;
-#endif /* CFG_DRIVER_RUNNING_MODE */
+				rSetP2P.u4Mode = RUNNING_P2P_MODE;
+#endif /* CFG_DRIVER_INITIAL_RUNNING_MODE */
+			}
 			if (set_p2p_mode_handler(prWdev->netdev, rSetP2P) == 0)
-				DBGLOG(INIT, INFO, "%s: p2p device registered\n", __func__);
+				DBGLOG(INIT, INFO, "%s: p2p/ap device registered (mode=%u)\n", __func__, rSetP2P.u4Mode);
 			else
-				DBGLOG(INIT, ERROR, "%s: Failed to register p2p device\n", __func__);
+				DBGLOG(INIT, ERROR, "%s: Failed to register p2p/ap device\n", __func__);
 		}
 #endif
 	} while (FALSE);

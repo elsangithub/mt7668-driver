@@ -53,6 +53,12 @@ ccflags-y += -DCFG_ENABLE_GTK_FRAME_FILTER=0
 ccflags-y += -DCFG_MET_PACKET_TRACE_SUPPORT=1
 ccflags-y += -DCFG_MET_TAG_SUPPORT=0
 
+# Default initial running mode: 0=P2P (p2p0), 1=AP (ap0)
+CFG_DRIVER_INITIAL_RUNNING_MODE ?= 0
+ifneq ($(CFG_DRIVER_INITIAL_RUNNING_MODE),)
+ccflags-y += -DCFG_DRIVER_INITIAL_RUNNING_MODE=$(CFG_DRIVER_INITIAL_RUNNING_MODE)
+endif
+
 ccflags-y += -I$(src)/os -I$(src)/os/linux/include
 ccflags-y += -I$(src)/include -I$(src)/include/nic -I$(src)/include/mgmt -I$(src)/include/chips
 ccflags-y += -I$(src)/os/linux/hif/sdio/include

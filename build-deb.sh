@@ -22,8 +22,9 @@ cp -a chips common include mgmt nic os prealloc Makefile Kconfig dkms.conf ${SRC
 sed -i "s/PACKAGE_VERSION=\".*\"/PACKAGE_VERSION=\"${VERSION}\"/" ${SRC_DIR}/dkms.conf
 find ${SRC_DIR} -type f \( -name "*.o" -o -name "*.o.d" -o -name "*.cmd" -o -name "*.ko" -o -name "*.mod*" \) -delete
 
-# 2. Copy system integration files (bluetooth blacklist, shutdown service, modprobe template)
+# 2. Copy system integration files (bluetooth blacklist, shutdown service, modprobe template, firmware)
 cp -a system/* ${BUILD_DIR}/
+[ -d "${BUILD_DIR}/lib/firmware" ] && chmod -R 755 ${BUILD_DIR}/lib && chmod 644 ${BUILD_DIR}/lib/firmware/*
 
 # 3. Copy Debian package control scripts
 cp -a debian/* ${BUILD_DIR}/DEBIAN/

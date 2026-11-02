@@ -9,4 +9,4 @@ Description: MediaTek MT7668 SDIO Wi-Fi Linux DKMS Driver
  Production-grade, turnkey out-of-tree DKMS driver for MediaTek MT7668
  (SDIO 037a:7608 / 037a:6602) Wi-Fi chipsets on ARM64 Linux kernels (6.x - 6.18+).
  Includes dedicated AP mode (ap0) support for router/hotspot operations,
- Bluetooth conflict isolation, and SDIO shutdown quiesce service for ZTE B860H V5.
+ Bluetooth conflict isolation, and SDIO shutdown quiesce service for FiberHome HG680-FJ.

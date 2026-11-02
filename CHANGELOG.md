@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0] - 2026-11-02
 
 ### 🚀 Major Architectural Leap (Elsangithub Production Release)
-This release represents a major evolutionary jump for the MediaTek MT7668 SDIO Wi-Fi driver, bringing it to full functional and packaging parity with the acclaimed `mt7663-driver` ecosystem. The headline capability is the porting and introduction of **Dedicated AP Mode (`ap_mode` / `ap0`)**, turning ZTE ZXV10 B860H V5 (Amlogic S905X2 / Meson G12A) TV boxes into enterprise-grade 5 GHz 802.11ac Hotspot Routers and Wi-Fi Repeaters.
+This release represents a major evolutionary jump for the MediaTek MT7668 SDIO Wi-Fi driver, bringing it to full functional and packaging parity with the acclaimed `mt7663-driver` ecosystem. The headline capability is the porting and introduction of **Dedicated AP Mode (`ap_mode` / `ap0`)**, turning FiberHome HG680-FJ (Amlogic S905X2 / Meson G12A) TV boxes into enterprise-grade 5 GHz 802.11ac Hotspot Routers and Wi-Fi Repeaters.
 
 ### Added
 - **Dedicated AP Mode & Modular Kernel Parameter (`ap_mode`)**:
@@ -47,5 +47,5 @@ This release represents a major evolutionary jump for the MediaTek MT7668 SDIO W
 - Fixed `mtk_cfg80211_get_station` signature and NULL pointer dereference.
 - Clamped `CFG_TX_MAX_PKT_SIZE` to 1408 bytes to avoid SDIO DMA FIFO overflows on `meson-gx-mmc`.
 - Suppressed `[wlan]` trace log spam (`DBG_DISABLE_ALL_LOG 1`).
-- Added SDIO quiesce unbind service `mt7668-shutdown.service` for reliable warm reboots on ZTE B860H V5.
+- Added SDIO quiesce unbind service `mt7668-shutdown.service` for reliable warm reboots on FiberHome HG680-FJ.
 - Added upstream Bluetooth module blacklist (`blacklist-mt7668-bluetooth.conf`).

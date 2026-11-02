@@ -5,7 +5,7 @@ Before=shutdown.target reboot.target halt.target
 
 [Service]
 Type=oneshot
-# On Amlogic TV boxes (ZTE B860H V5), the MT7668 module is powered by always-on rails.
+# On Amlogic TV boxes (FiberHome HG680-FJ), the MT7668 module is powered by always-on rails.
 # When a software reboot occurs, the SoC resets while MT7668 stays energized.
 # Unbinding the SDIO controller (ffe03000.sd) cleanly disconnects the SDIO bus before reboot,
 # preventing the MT7668 state machine from locking up on warm boot (error -110).

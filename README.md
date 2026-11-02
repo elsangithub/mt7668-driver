@@ -3,11 +3,11 @@
 [![Release](https://img.shields.io/badge/release-v2.0.0-blue.svg)](https://github.com/elsangithub/mt7668-driver/releases)
 [![DKMS](https://img.shields.io/badge/DKMS-enabled-brightgreen.svg)](https://github.com/elsangithub/mt7668-driver)
 [![Kernel](https://img.shields.io/badge/kernel-6.1--6.18+-orange.svg)](https://github.com/elsangithub/mt7668-driver)
-[![Hardware](https://img.shields.io/badge/hardware-ZTE%20B860H%20V5%20(S905X2)-purple.svg)](https://github.com/elsangithub/mt7668-driver)
+[![Hardware](https://img.shields.io/badge/hardware-FiberHome%20HG680--FJ%20(S905X2)-purple.svg)](https://github.com/elsangithub/mt7668-driver)
 [![License](https://img.shields.io/badge/license-Dual%20BSD%2FGPL-green.svg)](LICENSE)
 [![Indonesian Guide](https://img.shields.io/badge/baca-Bahasa%20Indonesia-red.svg)](README.id.md)
 
-Production-grade, turnkey out-of-tree Linux kernel DKMS driver for the **MediaTek MT7668** (SDIO `037a:7608` / `037a:6602`) 802.11ac 2x2 Wi-Fi combo chipset. Tailored specifically for ARM64 Linux kernels (6.1 LTS, 6.6 LTS, 6.12 LTS, and 6.18+) on Amlogic TV boxes (such as **ZTE ZXV10 B860H V5**, Amlogic S905X2 / Meson G12A), Debian 12 Bookworm, and Ubuntu 24.04 Noble.
+Production-grade, turnkey out-of-tree Linux kernel DKMS driver for the **MediaTek MT7668** (SDIO `037a:7608` / `037a:6602`) 802.11ac 2x2 Wi-Fi combo chipset. Tailored specifically for ARM64 Linux kernels (6.1 LTS, 6.6 LTS, 6.12 LTS, and 6.18+) on Amlogic TV boxes (such as **FiberHome HG680-FJ**, Amlogic S905X2 / Meson G12A), Debian 12 Bookworm, and Ubuntu 24.04 Noble.
 
 ---
 
@@ -16,7 +16,7 @@ Production-grade, turnkey out-of-tree Linux kernel DKMS driver for the **MediaTe
 Version **2.0.0** elevates the MT7668 driver to full feature parity with our production-proven `mt7663-driver` ecosystem:
 
 1. **📡 Dedicated SoftAP / Hotspot Mode (`ap_mode` & `ap0`)**:
-   Introduces the modular kernel parameter `ap_mode`. The driver can now dynamically instantiate a dedicated virtual interface (`ap0`) alongside `wlan0` at probe time, allowing the ZTE B860H V5 to function as a high-speed Dual-Band 5 GHz Hotspot Router or Wi-Fi Repeater. Compatible with `hostapd` and companion router dashboards such as [`mt7663-router-webui`](https://github.com/elsangithub/mt7663-router-webui).
+   Introduces the modular kernel parameter `ap_mode`. The driver can now dynamically instantiate a dedicated virtual interface (`ap0`) alongside `wlan0` at probe time, allowing the FiberHome HG680-FJ to function as a high-speed Dual-Band 5 GHz Hotspot Router or Wi-Fi Repeater. Compatible with `hostapd` and companion router dashboards such as [`mt7663-router-webui`](https://github.com/elsangithub/mt7663-router-webui).
 2. **🐧 Kernel 6.8+ & Modern Upstream Compatibility**:
    Seamlessly integrates updated `cfg80211` APIs (`cfg80211_cac_event`, `cfg80211_ch_switch_notify`, and livepatch safety protections) without modpost compilation failures.
 3. **📦 Standardized Debian DKMS Packaging (`debian/`)**:
@@ -53,9 +53,9 @@ sudo modprobe wlan_mt7668
 
 ---
 
-## 🚀 Verified Performance (ZTE B860H V5)
+## 🚀 Verified Performance (FiberHome HG680-FJ)
 
-Tested on **ZTE ZXV10 B860H V5 (Amlogic S905X2 / Meson G12A)** running **Armbian (Ubuntu 24.04 Noble / Debian 12 Bookworm)** with kernels `Linux 6.12.x-ophub` and `6.18.x-ophub`:
+Tested on **FiberHome HG680-FJ (Amlogic S905X2 / Meson G12A)** running **Armbian (Ubuntu 24.04 Noble / Debian 12 Bookworm)** with kernels `Linux 6.12.x-ophub` and `6.18.x-ophub`:
 
 - **Clean dmesg**: Zero `[wlan]` trace log spam (`DBG_DISABLE_ALL_LOG 1`).
 - **Power Stability**: Low-power auto-sleep disabled (`CFG_ENABLE_FULL_PM 0`) to maintain SDIO clock synchronization.
@@ -99,16 +99,16 @@ sudo reboot
 
 ---
 
-## 🔧 Essential System Configurations for ZTE B860H V5
+## 🔧 Essential System Configurations for FiberHome HG680-FJ
 
-On Amlogic TV boxes such as the ZTE B860H V5, two hardware design traits require specific OS configurations, both of which are bundled in `system/` and automatically applied by the `.deb` package:
+On Amlogic TV boxes such as the FiberHome HG680-FJ, two hardware design traits require specific OS configurations, both of which are bundled in `system/` and automatically applied by the `.deb` package:
 
 ### 1. Bluetooth Blacklist (`system/etc/modprobe.d/blacklist-mt7668-bluetooth.conf`)
 - **Why it is needed**: The MT7668 is a combo chip. Under Linux, upstream `btmtksdio` attempts to probe Bluetooth on SDIO Function 2. On TV box boards without dedicated MTK BT firmware loading lines, `btmtksdio` times out (`error -110`), stalling the SDIO bus.
 - **Solution**: Blacklisting `btmtksdio` and `btmtk` prevents the upstream driver from binding to Function 2, leaving the SDIO bus dedicated entirely and cleanly to Wi-Fi (`wlan_mt7668`).
 
 ### 2. SDIO Quiesce Shutdown Service (`system/etc/systemd/system/mt7668-shutdown.service`)
-- **Why it is needed**: The MT7668 module on the ZTE B860H V5 is powered by always-on power rails (`VDDAO_3V3` and `VDDAO_1V8`). On a soft reboot (`reboot`), the SoC resets while the MT7668 stays energized. If the SDIO interface is not cleanly disconnected prior to reset, the MT7668 internal state machine locks up (`CMD5 timeout -110`).
+- **Why it is needed**: The MT7668 module on the FiberHome HG680-FJ is powered by always-on power rails (`VDDAO_3V3` and `VDDAO_1V8`). On a soft reboot (`reboot`), the SoC resets while the MT7668 stays energized. If the SDIO interface is not cleanly disconnected prior to reset, the MT7668 internal state machine locks up (`CMD5 timeout -110`).
 - **Solution**: The `mt7668-shutdown.service` executes during shutdown and reboot targets:
   ```bash
   if [ -d /sys/bus/platform/drivers/meson-gx-mmc/ffe03000.sd ]; then

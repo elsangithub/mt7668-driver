@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.1] - 2026-11-07
+
+### 🛠️ Multi-Kernel Stability & UsrMerge Compliance Release
+This maintenance and stability release ports critical data-plane and multi-kernel fixes from the upstream MT7663 ecosystem, resolving kernel oops on station association across LTS kernels and enforcing modern UsrMerge filesystem compliance.
+
+### Added
+- **Full Co-existence & Driver Isolation with MT7663**:
+  - Renamed SDIO driver instance in `os/linux/hif/sdio/sdio.c` from generic `"wlan"` to `"wlan_mt7668"` to prevent kernel `driver_register` `-EBUSY` collision when both MT7663 and MT7668 modules are loaded.
+  - Isolated kernel `/proc/net/` debug and MET trace directories to `wlan_mt7668` (`os/linux/gl_proc.c`) and `wlan_mt7668_met` (`os/linux/gl_kal.c`), eliminating kernel `proc_register` "already registered" warnings and call traces during multi-driver boot.
+  - Blacklisted obsolete distro-provided MT7668 driver (`wlan_mt76x8_sdio`) in `blacklist-mt7668-bluetooth.conf` and `debian/postinst` to prevent `udev-worker` from binding competing legacy drivers on Ophub Armbian kernels.
+  - Namespaced system integration files to `99-mt7668-throughput.conf`, `99-mt7668-performance.rules`, and `mt7668-irq-tune.sh` to allow seamless parallel installation with `mt7663-dkms` on universal OS images.
+  - Added module active guard (`if lsmod | grep -q "^wlan_mt7668"; then ... fi`) to `mt7668-shutdown.service` so unbind operations only execute when MT7668 hardware is active.
+- **Global Station Record Lookup Fallback (`cnmGetAnyStaRecByAddress`)**:
+  - Implemented `cnmGetAnyStaRecByAddress()` in `mgmt/cnm_mem.c` and declared in `include/mgmt/cnm_mem.h` to look up active station records across all BSS indices.
+  - Added fallback in `nicEventAddPkeyDone` (`nic/nic_cmd_event.c` and `nic/nic_rx.c`) preventing BSS index mismatches on virtual interface `ap0` from dropping pairwise key completion notifications.
+- **WPA2/WPA3 Data-Plane Queue Unlocking (`fgIsTxKeyReady`)**:
+  - Explicitly unlocked the transmission queue (`fgIsTxKeyReady = TRUE`) and updated station queues (`qmUpdateStaRec`) immediately upon pairwise key installation in `os/linux/gl_p2p_cfg80211.c` (`mtk_p2p_cfg80211_add_key`).
+  - Resolves connection loops where client stations authenticate successfully but experience zero data throughput ("connected without internet").
+- **Universal SDIO Controller Device Matching (`ffe03000*`)**:
+  - Updated `mt7668-shutdown.service` to discover and unbind `/sys/bus/platform/drivers/meson-gx-mmc/ffe03000*` dynamically using wildcard matching, with `TimeoutStartSec=2`.
+  - Ensures clean SDIO reset and reliable warm reboots on FiberHome HG680-FJ regardless of whether the device label is `.sd` or `.mmc`.
+
+### Fixed
+- **Multi-Kernel Station Update Compatibility (`kalP2PGOStationUpdate`)**:
+  - Added preprocessor guard `#if (CFG80211_VERSION_CODE >= KERNEL_VERSION(6, 14, 0))` in `os/linux/gl_p2p_kal.c`.
+  - Passes `struct net_device *` (`aprRoleHandler`) on Linux kernels < 6.14 (including Linux 5.10 LTS and 6.12 LTS Ophub), and `struct wireless_dev *` (`ieee80211_ptr`) on Linux 6.14+.
+  - Fixes fatal kernel oops and `main_thread` crash when stations associate or disconnect.
+- **Accurate Linux Mainline 6.12+ `cfg80211_cac_event` Boundary**:
+  - Corrected macro guard in `os/linux/gl_p2p_kal.c` to `#if KERNEL_VERSION(6, 12, 0) <= CFG80211_VERSION_CODE`.
+  - Resolves compilation error (`too many arguments to function ‘cfg80211_cac_event’`) on intermediate Linux kernels (such as Ubuntu 6.8 LTS).
+- **Key Index Bitmask Authenticator Check (`wlanoidSetAddKey`)**:
+  - Explicitly permitted `IS_AUTHENTICATOR` (`BIT(28)`) in `common/wlan_oid.c` key index exception validation.
+- **UsrMerge Packaging Compliance (`build-deb.sh`)**:
+  - Relocated firmware installation destination from `./lib/firmware/` to `./usr/lib/firmware/` in Debian package build process.
+  - Prevents `dpkg -x` manual extractions from breaking the modern Debian/Armbian `/lib -> usr/lib` symlink and causing boot panics.
+
+---
+
 ## [2.0.0] - 2026-11-02
 
 ### 🚀 Major Architectural Leap (Elsangithub Production Release)

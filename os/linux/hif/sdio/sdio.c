@@ -152,7 +152,7 @@ static const struct dev_pm_ops mtk_sdio_pm_ops = {
 };
 
 static struct sdio_driver mtk_sdio_driver = {
-	.name = "wlan",		/* "MTK SDIO WLAN Driver" */
+	.name = "wlan_mt7668",	/* MediaTek MT7668 SDIO WLAN Driver */
 	.id_table = mtk_sdio_ids,
 	.probe = NULL,
 	.remove = NULL,

@@ -4,7 +4,7 @@
 
 # MediaTek MT7668 SDIO Wi-Fi Driver for Amlogic TV Boxes (Armbian Ophub)
 
-[![Release](https://img.shields.io/badge/release-v2.0.0-blue.svg)](https://github.com/elsangithub/mt7668-driver/releases)
+[![Release](https://img.shields.io/badge/release-v2.0.1-blue.svg)](https://github.com/elsangithub/mt7668-driver/releases)
 [![Build & Release](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/elsangithub/mt7668-driver/actions)
 [![DKMS Ready](https://img.shields.io/badge/DKMS-Automated_Build-brightgreen.svg)](https://github.com/elsangithub/mt7668-driver)
 [![License: Dual BSD/GPL](https://img.shields.io/badge/License-Dual_BSD%2FGPL-blue.svg)](LICENSE)
@@ -12,6 +12,8 @@
 A high-performance out-of-tree Linux kernel driver with DKMS automation, specifically patched for the **MediaTek MT7668** combo module (SDIO IDs `037A:7608` / `037A:6602`) dual-band 802.11a/b/g/n/ac 2x2 MIMO.
 
 Specially engineered to overcome Amlogic G12A (S905X2) SDIO host controller architectural quirks, and physically tested & validated directly on **FiberHome HG680-FJ** TV boxes.
+
+This project builds upon and evolves the foundational implementation from [**junglon/mt7668-driver**](https://github.com/junglon/mt7668-driver) (originally targeted for ZTE B860H V5), extending it with enterprise-grade multi-core SMP affinity, Dedicated AP Mode (`ap0`), UsrMerge filesystem compliance, strict multi-driver co-existence with MT7663, and modern Linux LTS kernel compatibility.
 
 > [!NOTE]
 > **Tested & Validated Environment:**
@@ -85,11 +87,11 @@ ls -d /usr/src/linux-headers-$(uname -r)
 
 ### Step 3: Download & Install the Debian Package (.deb)
 ```bash
-# Download the latest official v2.0.0 release
-wget https://github.com/elsangithub/mt7668-driver/releases/download/v2.0.0/mt7668-dkms_2.0.0_all.deb
+# Download the latest official v2.0.1 release
+wget https://github.com/elsangithub/mt7668-driver/releases/download/v2.0.1/mt7668-dkms_2.0.1_all.deb
 
 # Install package (DKMS will compile the module for your active kernel in ~15-20 seconds)
-sudo dpkg -i mt7668-dkms_2.0.0_all.deb
+sudo dpkg -i mt7668-dkms_2.0.1_all.deb
 ```
 
 ### Step 4: Load Driver or Reboot
@@ -161,9 +163,27 @@ Upon boot, `ap0` will be created automatically alongside `wlan0`.
 
 ---
 
-## 🌐 Companion Compatibility: Router Web UI
+## 🌐 Official Companion Web GUI: Router & Hotspot Dashboard (`mt7663-router-webui`)
 
-The modular architecture of `ap_mode=1` is fully compatible with companion web managers such as [`mt7663-router-webui`](https://github.com/elsangithub/mt7663-router-webui). Companion web interfaces can seamlessly orchestrate `hostapd`, `dnsmasq`, and NAT masquerading without modifying kernel driver source code.
+To keep this kernel driver repository lightweight, clean, and purely focused on kernel-level DKMS hardware support, all Web UI management interfaces, DHCP/DNS orchestration, and dynamic routing automation have been separated into our official companion repository:
+
+👉 [**`mt7663-router-webui` (Official GitHub Repository)**](https://github.com/elsangithub/mt7663-router-webui)
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/elsangithub/mt7663-router-webui/main/docs/screenshots/01-overview.png" alt="MT7668 Router Web UI Dashboard" width="850">
+</div>
+
+### Key Capabilities Powered by `mt7663-router-webui` on MT7668:
+* **Zero-Dependency WSGI Web Dashboard**: Built-in lightweight Python 3 Web UI running on port `8080` (ultra-low footprint: `< 25 MB` RAM usage).
+* **Live Hardware & Network Telemetry**: Real-time monitoring of Amlogic SoC temperature, CPU load, RAM usage, and per-device real-time upload/download bandwidth.
+* **Turnkey Hotspot & Client Management**: One-click Wi-Fi station scanner, interactive SoftAP configurator (`ap0` with WPA2/WPA3 Personal, 20/40/80 MHz channel widths, and custom upstream DNS presets).
+* **Dual-Band Wireless Repeater Mode (DBDC Concurrent)**: Seamless orchestration of simultaneous client uplink (`wlan0`) and broadcast hotspot (`ap0`) with automated `iptables` NAT masquerading.
+* **Full Bilingual Support**: Instant on-the-fly switching between English and Bahasa Indonesia.
+
+```bash
+# To install the companion Web UI & Hotspot Manager alongside this driver:
+sudo apt install ./mt7663-router-webui_1.0.1_all.deb
+```
 
 ---
 
@@ -180,8 +200,16 @@ sudo apt purge -y mt7668-dkms
 3. Unregisters DKMS module and cleans build artifacts from `/var/lib/dkms/mt7668/`.
 4. Removes module autoload configurations from `/etc/modules-load.d/wlan_mt7668.conf`.
 5. Disables and deletes the shutdown service `/etc/systemd/system/mt7668-shutdown.service`.
-6. Removes IRQ performance tuning rules in `/etc/udev/rules.d/99-wlan-performance.rules`.
-7. Restores pre-existing stock firmware backup from `/lib/firmware/backup_stock_mt7668/` if present.
+6. Removes performance tuning rules and scripts (`/etc/udev/rules.d/99-mt7668-performance.rules`, `/etc/sysctl.d/99-mt7668-throughput.conf`, `/usr/lib/udev/mt7668-irq-tune.sh`).
+7. Restores pre-existing stock firmware backup from `/usr/lib/firmware/backup_stock_mt7668/` if present.
+
+---
+
+## 🤝 Credits & Acknowledgments
+- **MediaTek Inc.**: Original chipset architecture and driver baseline.
+- [**junglon/mt7668-driver**](https://github.com/junglon/mt7668-driver): Invaluable reference implementation and insights on MediaTek wireless drivers for Amlogic platforms (specifically ZTE B860H V5).
+- **Ophub & Armbian Community**: Custom Linux kernels and build tooling for Amlogic TV boxes.
+- **Van der Decken**: Maintainer and developer.
 
 ---
 

@@ -713,6 +713,15 @@ int mtk_p2p_cfg80211_add_key(struct wiphy *wiphy,
 	if (rStatus == WLAN_STATUS_SUCCESS)
 		i4Rslt = 0;
 
+	if (i4Rslt == 0 && pairwise && mac_addr) {
+		P_STA_RECORD_T prStaRec = cnmGetAnyStaRecByAddress(
+			prGlueInfo->prAdapter, (PUINT_8)mac_addr);
+		if (prStaRec) {
+			prStaRec->fgIsTxKeyReady = TRUE;
+			qmUpdateStaRec(prGlueInfo->prAdapter, prStaRec);
+		}
+	}
+
 	return i4Rslt;
 }
 

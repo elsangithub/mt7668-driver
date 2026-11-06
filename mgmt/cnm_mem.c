@@ -708,6 +708,33 @@ P_STA_RECORD_T cnmGetStaRecByAddress(P_ADAPTER_T prAdapter, UINT_8 ucBssIndex, P
 
 /*----------------------------------------------------------------------------*/
 /*!
+* @brief Get STA_RECORD_T by Peer MAC Address across all BSS indexes.
+*
+* @param[in] pucPeerMacAddr      Given Peer MAC Address.
+*
+* @retval   Pointer to STA_RECORD_T, if found. NULL, if not found
+*/
+/*----------------------------------------------------------------------------*/
+P_STA_RECORD_T cnmGetAnyStaRecByAddress(P_ADAPTER_T prAdapter, PUINT_8 pucPeerMacAddr)
+{
+	P_STA_RECORD_T prStaRec;
+	UINT_16 i;
+
+	if (!prAdapter || !pucPeerMacAddr)
+		return NULL;
+
+	for (i = 0; i < CFG_STA_REC_NUM; i++) {
+		prStaRec = &prAdapter->arStaRec[i];
+
+		if (prStaRec->fgIsInUse && EQUAL_MAC_ADDR(prStaRec->aucMacAddr, pucPeerMacAddr))
+			break;
+	}
+
+	return (i < CFG_STA_REC_NUM) ? prStaRec : NULL;
+}
+
+/*----------------------------------------------------------------------------*/
+/*!
 * @brief This function will change the ucStaState of STA_RECORD_T and also do
 *        event indication to HOST to sync the STA_RECORD_T in driver.
 *

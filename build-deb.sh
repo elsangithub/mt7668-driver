@@ -3,7 +3,7 @@ set -e
 
 PACKAGE=mt7668-dkms
 DEFAULT_VERSION=$(grep -E "^[[:space:]]*PACKAGE_VERSION=" dkms.conf 2>/dev/null | cut -d'"' -f2)
-VERSION=${1:-${DEFAULT_VERSION:-2.0.0}}
+VERSION=${1:-${DEFAULT_VERSION:-2.0.1}}
 TARGET_DEB="${PACKAGE}_${VERSION}_all.deb"
 
 BUILD_DIR=/tmp/${PACKAGE}_build
@@ -22,10 +22,15 @@ cp -a chips common include mgmt nic os prealloc Makefile Kconfig dkms.conf ${SRC
 sed -i "s/PACKAGE_VERSION=\".*\"/PACKAGE_VERSION=\"${VERSION}\"/" ${SRC_DIR}/dkms.conf
 find ${SRC_DIR} -type f \( -name "*.o" -o -name "*.o.d" -o -name "*.cmd" -o -name "*.ko" -o -name "*.mod*" \) -delete
 
-# 2. Copy system integration files (bluetooth blacklist, shutdown service, modprobe template, firmware)
+# 2. Copy system integration files (firmware, udev, sysctl, blacklist)
 cp -a system/* ${BUILD_DIR}/
-[ -d "${BUILD_DIR}/lib/firmware" ] && chmod -R 755 ${BUILD_DIR}/lib && chmod 644 ${BUILD_DIR}/lib/firmware/*
-[ -f "${BUILD_DIR}/usr/lib/udev/wlan-irq-tune.sh" ] && chmod 755 ${BUILD_DIR}/usr/lib/udev/wlan-irq-tune.sh
+if [ -d "${BUILD_DIR}/lib/firmware" ]; then
+    mkdir -p ${BUILD_DIR}/usr/lib/firmware
+    cp -a ${BUILD_DIR}/lib/firmware/* ${BUILD_DIR}/usr/lib/firmware/
+    rm -rf ${BUILD_DIR}/lib
+fi
+chmod 644 ${BUILD_DIR}/usr/lib/firmware/* 2>/dev/null || true
+chmod 755 ${BUILD_DIR}/usr/lib/udev/mt7668-irq-tune.sh 2>/dev/null || true
 
 # 3. Copy Debian package control scripts
 cp -a debian/* ${BUILD_DIR}/DEBIAN/

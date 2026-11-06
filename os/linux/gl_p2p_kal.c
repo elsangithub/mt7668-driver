@@ -1240,15 +1240,31 @@ kalP2PGOStationUpdate(IN P_GLUE_INFO_T prGlueInfo,
 			rStationInfo.assoc_req_ies = prCliStaRec->pucAssocReqIe;
 			rStationInfo.assoc_req_ies_len = prCliStaRec->u2AssocReqIeLen;
 
-			cfg80211_new_sta(prP2pGlueInfo->aprRoleHandler->ieee80211_ptr,
-					 /* struct wireless_dev * wdev, */
+#if (CFG80211_VERSION_CODE >= KERNEL_VERSION(6, 14, 0))
+			if (prP2pGlueInfo->aprRoleHandler->ieee80211_ptr) {
+				cfg80211_new_sta(prP2pGlueInfo->aprRoleHandler->ieee80211_ptr,
+						 prCliStaRec->aucMacAddr, &rStationInfo, GFP_KERNEL);
+			}
+#else
+			cfg80211_new_sta(prP2pGlueInfo->aprRoleHandler,
+					 /* struct net_device * dev, */
 					 prCliStaRec->aucMacAddr, &rStationInfo, GFP_KERNEL);
+#endif
 		} else {
 			++prP2pGlueInfo->i4Generation;
 
-			cfg80211_del_sta(prP2pGlueInfo->aprRoleHandler->ieee80211_ptr,
-					 /* struct wireless_dev * wdev, */
-					 prCliStaRec->aucMacAddr, GFP_KERNEL);
+			if ((prGlueInfo->ulFlag & GLUE_FLAG_HALT) == 0) {
+#if (CFG80211_VERSION_CODE >= KERNEL_VERSION(6, 14, 0))
+				if (prP2pGlueInfo->aprRoleHandler->ieee80211_ptr) {
+					cfg80211_del_sta(prP2pGlueInfo->aprRoleHandler->ieee80211_ptr,
+							 prCliStaRec->aucMacAddr, GFP_KERNEL);
+				}
+#else
+				cfg80211_del_sta(prP2pGlueInfo->aprRoleHandler,
+						 /* struct net_device * dev, */
+						 prCliStaRec->aucMacAddr, GFP_KERNEL);
+#endif
+			}
 		}
 
 	} while (FALSE);
@@ -1312,7 +1328,7 @@ VOID kalP2PCacFinishedUpdate(IN P_GLUE_INFO_T prGlueInfo, IN UINT_8 ucRoleIndex)
 		}
 
 		DBGLOG(INIT, INFO, "kalP2PCacFinishedUpdate: Update to OS\n");
-#if KERNEL_VERSION(6, 1, 0) <= CFG80211_VERSION_CODE
+#if KERNEL_VERSION(6, 12, 0) <= CFG80211_VERSION_CODE
 		cfg80211_cac_event(prGlueInfo->prP2PInfo[ucRoleIndex]->prDevHandler,
 				prGlueInfo->prP2PInfo[ucRoleIndex]->chandef, NL80211_RADAR_CAC_FINISHED, GFP_KERNEL, 0);
 #elif KERNEL_VERSION(3, 14, 0) <= CFG80211_VERSION_CODE

@@ -7,4 +7,3 @@ if [ -d /sys/class/net/wlan0/queues/rx-0 ]; then
     echo e > /sys/class/net/wlan0/queues/rx-0/rps_cpus
     echo 4096 > /sys/class/net/wlan0/queues/rx-0/rps_flow_cnt 2>/dev/null || true
 fi
-

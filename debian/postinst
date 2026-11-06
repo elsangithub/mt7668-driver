@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-VERSION="2.0.0"
+VERSION="2.0.1"
 
 # Detect existing registrations dynamically
 OLD_VERSIONS=$(dkms status -m mt7668 2>/dev/null | awk -F'[/,]' '{print $2}' | sort -u)
@@ -46,8 +46,8 @@ echo "Configuring automatic kernel module loading..."
 echo wlan_mt7668 > /etc/modules-load.d/wlan_mt7668.conf
 depmod -a
 
-# Unload non-functional upstream Bluetooth module if currently loaded
-modprobe -r btmtksdio btmtk 2>/dev/null || true
+# Unload non-functional upstream Bluetooth and obsolete distro Wi-Fi modules if currently loaded
+modprobe -r btmtksdio btmtk wlan_mt76x8_sdio 2>/dev/null || true
 
 # Load driver module
 modprobe wlan_mt7668 2>/dev/null || true
@@ -61,10 +61,10 @@ fi
 ip link set wlan0 up 2>/dev/null || true
 
 # Apply sysctl and udev performance rules (IRQ balancing & RPS)
-sysctl -p /etc/sysctl.d/99-wifi-throughput.conf 2>/dev/null || true
+sysctl -p /etc/sysctl.d/99-mt7668-throughput.conf 2>/dev/null || true
 udevadm control --reload-rules 2>/dev/null || true
 udevadm trigger 2>/dev/null || true
-/usr/lib/udev/wlan-irq-tune.sh 2>/dev/null || true
+/usr/lib/udev/mt7668-irq-tune.sh 2>/dev/null || true
 
 systemctl restart wpa_supplicant 2>/dev/null || true
 systemctl restart NetworkManager 2>/dev/null || true

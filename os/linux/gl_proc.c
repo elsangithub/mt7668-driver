@@ -68,7 +68,7 @@
 #include "wlan_oid.h"
 
 #define PROC_MCR_ACCESS                         "mcr"
-#define PROC_ROOT_NAME							"wlan"
+#define PROC_ROOT_NAME							"wlan_mt7668"
 
 #if CFG_SUPPORT_DEBUG_FS
 #define PROC_ROAM_PARAM							"roam_param"

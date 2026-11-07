@@ -19,6 +19,7 @@ mkdir -p ${BUILD_DIR}/DEBIAN
 cp -a chips common include mgmt nic os prealloc Makefile Kconfig dkms.conf ${SRC_DIR}/
 [ -f CHANGELOG.md ] && cp -a CHANGELOG.md ${SRC_DIR}/
 [ -f README.md ] && cp -a README.md ${SRC_DIR}/
+[ -f LICENSE ] && cp -a LICENSE ${SRC_DIR}/
 sed -i "s/PACKAGE_VERSION=\".*\"/PACKAGE_VERSION=\"${VERSION}\"/" ${SRC_DIR}/dkms.conf
 find ${SRC_DIR} -type f \( -name "*.o" -o -name "*.o.d" -o -name "*.cmd" -o -name "*.ko" -o -name "*.mod*" \) -delete
 
@@ -38,6 +39,14 @@ sed -i "s/^Version:.*/Version: ${VERSION}/" ${BUILD_DIR}/DEBIAN/control
 sed -i "s/VERSION=\".*\"/VERSION=\"${VERSION}\"/" ${BUILD_DIR}/DEBIAN/postinst ${BUILD_DIR}/DEBIAN/prerm
 chmod 755 ${BUILD_DIR}/DEBIAN
 chmod 755 ${BUILD_DIR}/DEBIAN/preinst ${BUILD_DIR}/DEBIAN/postinst ${BUILD_DIR}/DEBIAN/prerm
+
+# 4. Install Debian package documentation & copyright (Debian Policy Manual §12.5)
+DOC_DIR=${BUILD_DIR}/usr/share/doc/${PACKAGE}
+mkdir -p ${DOC_DIR}
+[ -f debian/copyright ] && cp -a debian/copyright ${DOC_DIR}/copyright
+[ -f CHANGELOG.md ] && cp -a CHANGELOG.md ${DOC_DIR}/changelog
+chmod 644 ${DOC_DIR}/* 2>/dev/null || true
+rm -f ${BUILD_DIR}/DEBIAN/copyright
 
 dpkg-deb --build ${BUILD_DIR} ${TARGET_DEB}
 rm -rf ${BUILD_DIR}

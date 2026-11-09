@@ -4,7 +4,7 @@
 
 # Driver Wi-Fi MediaTek MT7668 SDIO untuk TV Box Amlogic (Armbian Ophub)
 
-[![Release](https://img.shields.io/badge/release-v2.0.1-blue.svg)](https://github.com/elsangithub/mt7668-driver/releases)
+[![Release](https://img.shields.io/badge/release-v2.0.2-blue.svg)](https://github.com/elsangithub/mt7668-driver/releases)
 [![Build & Release](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/elsangithub/mt7668-driver/actions)
 [![DKMS Ready](https://img.shields.io/badge/DKMS-Automated_Build-brightgreen.svg)](https://github.com/elsangithub/mt7668-driver)
 [![License: Dual BSD/GPL](https://img.shields.io/badge/License-Dual_BSD%2FGPL-blue.svg)](LICENSE)
@@ -29,17 +29,17 @@ Proyek ini merupakan pengembangan dan penyempurnaan lanjutan dari implementasi d
 
 ---
 
-## 🔍 Kompatibilitas Hardware & Varian Chipset FiberHome HG680-FJ
+## 🔍 Kompatibilitas Hardware: FiberHome HG680-FJ & ZTE B860H V5
 
-Perangkat STB **FiberHome HG680-FJ** (Amlogic S905X2 / G12A) di pasaran beredar dengan **dua varian modul Wi-Fi internal** tergantung batch produksi pabrik:
+| Model / Varian Perangkat | Modul Fisik | Core Chipset Internal | Status | Catatan |
+| :--- | :--- | :--- | :--- | :--- |
+| **FiberHome HG680-FJ (Varian A)** | MediaTek MT7668 | **MediaTek MT7668** (`037A:7608` / `037A:6602`) | ✅ Didukung | Langsung bekerja dengan DTB bawaan |
+| **FiberHome HG680-FJ (Varian B)** | AMPAK MT7661RSN | MediaTek MT7663 (`037A:7663`) | ➡️ Driver Pendamping | Gunakan [elsangithub/mt7663-driver](https://github.com/elsangithub/mt7663-driver) |
+| **ZTE ZXV10 B860H V5** | MediaTek MT7668 | **MediaTek MT7668** (`037A:7608` / `037A:6602`) | ✅ Didukung | Wajib pasang DTB perbaikan (`no-1-8-v;`) dari [dtb/](dtb/README.id.md) agar tahan warm reboot |
 
-| Varian Hardware | Modul Fisik | Core Chipset Internal | Driver Linux yang Digunakan |
-| :--- | :--- | :--- | :--- |
-| **Varian A** | MediaTek MT7668 | **MediaTek MT7668** (`037A:7608` / `037A:6602`) | **Driver DKMS ini (`mt7668-dkms`)** |
-| **Varian B** | AMPAK MT7661RSN | MediaTek MT7663 (`037A:7663`) | [elsangithub/mt7663-driver](https://github.com/elsangithub/mt7663-driver) |
-
-- **Unit MT7668 (Varian A)**: Membutuhkan paket DKMS ini (**`mt7668-dkms`**) agar Wi-Fi Dual-Band 2.4 GHz & 5 GHz dapat diinisialisasi secara penuh dan stabil.
-- **Unit AMPAK MT7661RSN / MT7663 (Varian B)**: Membutuhkan paket terpisah `mt7663-dkms`.
+- **Unit MT7668**: Membutuhkan paket DKMS ini (**`mt7668-dkms`**) agar Wi-Fi Dual-Band 2.4 GHz & 5 GHz dapat diinisialisasi secara penuh dan stabil.
+- **TV Box ZTE B860H V5**: Karena jalur regulator daya *Always-On*, gunakan berkas DTB teruji kami (`dtb/amlogic/meson-g12a-b860h-v5.dtb`) yang dijelaskan di [dtb/README.id.md](dtb/README.id.md) agar STB dapat di-reboot secara software tanpa perlu cabut-colok adaptor listrik.
+- **Unit AMPAK MT7661RSN / MT7663**: Membutuhkan paket terpisah `mt7663-dkms`.
 - **Koeksistensi Bersih**: Paket ini mengisolasi konfigurasi firmware ke `/lib/firmware/wifi.cfg` dan blacklist modul yang bersih, sehingga aman jika Anda membangun image sistem bersama.
 
 ### Cara Memeriksa Varian Chipset di STB Anda:
@@ -87,11 +87,11 @@ ls -d /usr/src/linux-headers-$(uname -r)
 
 ### Langkah 3: Unduh & Pasang Paket Debian (.deb)
 ```bash
-# Unduh paket rilis resmi terbaru (v2.0.1)
-wget https://github.com/elsangithub/mt7668-driver/releases/download/v2.0.1/mt7668-dkms_2.0.1_all.deb
+# Unduh paket rilis resmi terbaru (v2.0.2)
+wget https://github.com/elsangithub/mt7668-driver/releases/download/v2.0.2/mt7668-dkms_2.0.2_all.deb
 
 # Pasang paket (DKMS akan otomatis mengompilasi modul untuk kernel aktif dalam ~15-20 detik)
-sudo dpkg -i mt7668-dkms_2.0.1_all.deb
+sudo dpkg -i mt7668-dkms_2.0.2_all.deb
 ```
 
 ### Langkah 4: Muat Driver atau Reboot

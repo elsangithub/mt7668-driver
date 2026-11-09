@@ -8,3 +8,5 @@ modules.order
 Module.symvers
 .tmp_versions/
 *.deb
+EXPERIMENTAL_LOG.md
+

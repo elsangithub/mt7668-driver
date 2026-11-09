@@ -1,5 +1,5 @@
 Package: mt7668-dkms
-Version: 2.0.1
+Version: 2.0.2
 Section: kernel
 Priority: optional
 Architecture: all

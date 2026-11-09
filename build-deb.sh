@@ -3,7 +3,7 @@ set -e
 
 PACKAGE=mt7668-dkms
 DEFAULT_VERSION=$(grep -E "^[[:space:]]*PACKAGE_VERSION=" dkms.conf 2>/dev/null | cut -d'"' -f2)
-VERSION=${1:-${DEFAULT_VERSION:-2.0.1}}
+VERSION=${1:-${DEFAULT_VERSION:-2.0.2}}
 TARGET_DEB="${PACKAGE}_${VERSION}_all.deb"
 
 BUILD_DIR=/tmp/${PACKAGE}_build
@@ -32,6 +32,7 @@ if [ -d "${BUILD_DIR}/lib/firmware" ]; then
 fi
 chmod 644 ${BUILD_DIR}/usr/lib/firmware/* 2>/dev/null || true
 chmod 755 ${BUILD_DIR}/usr/lib/udev/mt7668-irq-tune.sh 2>/dev/null || true
+chmod 755 ${BUILD_DIR}/usr/sbin/mt7668-shutdown.sh 2>/dev/null || true
 
 # 3. Copy Debian package control scripts
 cp -a debian/* ${BUILD_DIR}/DEBIAN/

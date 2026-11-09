@@ -9,8 +9,8 @@ Type=oneshot
 # When a software reboot occurs, the SoC resets while MT7668 stays energized.
 # Unbinding the SDIO controller (ffe03000.sd) cleanly disconnects the SDIO bus before reboot,
 # preventing the MT7668 state machine from locking up on warm boot (error -110).
-ExecStart=/bin/sh -c 'if lsmod | grep -q "^wlan_mt7668"; then for d in /sys/bus/platform/drivers/*mmc*/ffe03000* /sys/bus/platform/drivers/*sd*/ffe03000*; do [ -e "$d" ] && echo "${d##*/}" > "$(dirname "$d")/unbind" 2>/dev/null || true; done; fi'
-TimeoutStartSec=2
+ExecStart=/usr/sbin/mt7668-shutdown.sh
+TimeoutStartSec=5
 
 [Install]
 WantedBy=shutdown.target reboot.target halt.target

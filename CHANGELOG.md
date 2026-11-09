@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.2] - 2026-11-10
+
+### 🚀 Amlogic Warm Reboot Fix, Systemd Shutdown Script & ZTE B860H V5 Support
+This release introduces critical fixes for warm reboot deadlocks on Amlogic TV boxes with Always-On power rails (specifically ZTE ZXV10 B860H V5), resolves a silent failure in `mt7668-shutdown.service`, and includes an officially tested DTB.
+
+### Added
+- **Official ZTE ZXV10 B860H V5 DTB Support (`dtb/amlogic/meson-g12a-b860h-v5.dtb`)**:
+  - Added pre-compiled binary DTB, source DTS, and 1-line patch (`no-1-8-v;`) resolving the hardware 1.8V SDR104 lockup on ZTE B860H V5.
+  - Added bilingual installation guides (`dtb/README.md` and `dtb/README.id.md`) for Armbian users.
+- **Dedicated Shutdown Helper Script (`/usr/sbin/mt7668-shutdown.sh`)**:
+  - Implemented standalone POSIX shell script installed with `755` permissions to cleanly unload `wlan_mt7668` and unbind the SDIO host controller (`ffe03000*`) before reboot or shutdown targets.
+- **Single Source of Truth (SSOT) Version Synchronization (`sync-version.sh`)**:
+  - Added automation script to ensure atomic, verified synchronization of version numbers and release asset links across all package metadata and documentation.
+
+### Fixed
+- **Systemd Inline Syntax Silent Failure in `mt7668-shutdown.service`**:
+  - Fixed a syntax bug where systemd interpreted `${d##*/}` as an internal variable evaluating to an empty string `""`, causing unbind commands to be rejected by the kernel. Now cleanly invokes `/usr/sbin/mt7668-shutdown.sh`.
+- **Amlogic Always-On Power Rail Warm Reboot Deadlock (`error -22`)**:
+  - Identified root cause of `meson-gx-mmc: no support for card's volts` and `Card stuck being busy!`: Always-On rails keep MT7668 locked in 1.8V mode while SoC reboots at 3.3V. Enforcing 3.3V signaling via `no-1-8-v;` in the B860H V5 DTB eliminates voltage mismatch and guarantees 100% stable warm reboots.
+
+---
+
 ## [2.0.1] - 2026-11-07
 
 ### 🛠️ Multi-Kernel Stability & UsrMerge Compliance Release

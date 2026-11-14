@@ -13,8 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This release introduces critical fixes for warm reboot deadlocks on Amlogic TV boxes with Always-On power rails (specifically ZTE ZXV10 B860H V5), resolves a silent failure in `mt7668-shutdown.service`, and includes an officially tested DTB.
 
 ### Added
-- **Official ZTE ZXV10 B860H V5 DTB Support (`dtb/amlogic/meson-g12a-b860h-v5.dtb`)**:
-  - Added pre-compiled binary DTB, source DTS, and 1-line patch (`no-1-8-v;`) resolving the hardware 1.8V SDR104 lockup on ZTE B860H V5.
+- **Official ZTE ZXV10 B860H V5 DTB Suite (`meson-g12a-b860h-v5.dtb` & `meson-g12a-b860h-v5-v1.dtb`)**:
+  - Added standard pre-compiled binary DTB, source DTS, and patch (`no-1-8-v;`) resolving the hardware Always-On power rail warm reboot lockup on ZTE B860H V5.
+  - Added specialized eMMC DTB (`meson-g12a-b860h-v5-v1.dtb`) with 48 MB TrustZone Memory Shield (`secmon@5300000` `no-map`) preventing kernel panic (`Synchronous External Abort 0x96000010`) on direct internal eMMC boot under Linux 6.12+, while maintaining full SDR104 100 MHz SDIO performance.
   - Added bilingual installation guides (`dtb/README.md` and `dtb/README.id.md`) for Armbian users.
 - **Dedicated Shutdown Helper Script (`/usr/sbin/mt7668-shutdown.sh`)**:
   - Implemented standalone POSIX shell script installed with `755` permissions to cleanly unload `wlan_mt7668` and unbind the SDIO host controller (`ffe03000*`) before reboot or shutdown targets.

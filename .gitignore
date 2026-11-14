@@ -9,4 +9,5 @@ Module.symvers
 .tmp_versions/
 *.deb
 EXPERIMENTAL_LOG.md
+dtb/amlogic/meson-g12a-b860h-v5-dtb-v1.0.3/
 
